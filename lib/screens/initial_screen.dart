@@ -62,29 +62,46 @@ class _InitialScreenState extends ConsumerState<InitialScreen> {
     SettingsOptions.initialize(sp!);
     CookiesManager.initialize();
 
-    await CookiesManager.validate(
-      onAddOpen: startCounter,
-      handleAddOpenError: (String addHash) async {
-        // Silently trigger openAdd in the background without launching the external browser!
-        try {
-          await openAdd(addHash);
-        } catch (_) {}
+    try {
+      await CookiesManager.validate(
+        onAddOpen: startCounter,
+        handleAddOpenError: (String addHash) async {
+          // Silently trigger openAdd in the background without launching the external browser!
+          try {
+            await openAdd(addHash);
+          } catch (_) {}
 
-        startCounter(
-          onFinish: () async {
-            final newTHashT = await verifyAdd(addHash);
-            if (newTHashT != null) {
-              l.log("newTHashT: $newTHashT");
-              CookiesManager.tHashT = newTHashT;
-              GoRouter.of(context).go(SettingsOptions.currentScreen, extra: 0);
-            }
-          },
-        );
-      },
-      onSuccess: () {
+          startCounter();
+          
+          // Smart polling: check every 2 seconds to load instantly as soon as verified!
+          for (int attempt = 0; attempt < 12; attempt++) {
+            await Future.delayed(const Duration(seconds: 2));
+            try {
+              final newTHashT = await verifyAdd(addHash);
+              if (newTHashT != null) {
+                l.log("newTHashT verified via fallback polling: $newTHashT");
+                CookiesManager.tHashT = newTHashT;
+                if (mounted) {
+                  GoRouter.of(context).go(SettingsOptions.currentScreen, extra: 0);
+                }
+                break;
+              }
+            } catch (_) {}
+          }
+        },
+        onSuccess: () {
+          if (mounted) {
+            GoRouter.of(context).go(SettingsOptions.currentScreen, extra: 0);
+          }
+        },
+      );
+    } catch (e) {
+      l.error("Error during initial validation (offline or timeout): $e");
+      // Graceful offline/timeout fallback: proceed to the home screen anyway!
+      if (mounted) {
         GoRouter.of(context).go(SettingsOptions.currentScreen, extra: 0);
-      },
-    );
+      }
+    }
   }
 
   String get _statusMessage {

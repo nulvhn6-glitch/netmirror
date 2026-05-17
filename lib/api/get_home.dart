@@ -16,7 +16,10 @@ Future<String> getHome({int id = 0, required OTT ott, String? studio}) async {
   };
 
   final tHashT = CookiesManager.tHashT;
-  final cookies = {'t_hash_t': Uri.encodeComponent(tHashT!), 'ott': ott.cookie};
+  if (tHashT == null) {
+    throw Exception("tHashT is null. Cookie token is not initialized.");
+  }
+  final cookies = {'t_hash_t': Uri.encodeComponent(tHashT), 'ott': ott.cookie};
   if (studio != null) {
     cookies['studio'] = studio;
   }

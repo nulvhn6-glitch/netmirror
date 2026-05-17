@@ -40,22 +40,36 @@ abstract class HomeState<T extends HomeModel, W extends Home> extends State<W> {
 
   void loadDataFromLocal() async {
     final localData = await DB.home.get(currentTabName, ott) as T?;
-    if (localData == null || localData.isStale) {
-      loadDataFromOnline();
-    } else {
+    if (localData != null) {
       setState(() {
         data = localData;
       });
     }
+    if (localData == null || localData.isStale) {
+      loadDataFromOnline();
+    }
   }
 
   Future<void> loadDataFromOnline() async {
-    final raw = await getHome(id: widget.tab, ott: ott, studio: studioName);
-    final onlineData = HomeModel.parse(raw, ott) as T;
-    setState(() {
-      data = onlineData;
-    });
-    DB.home.add(currentTabName, onlineData, ott);
+    try {
+      final raw = await getHome(id: widget.tab, ott: ott, studio: studioName);
+      final onlineData = HomeModel.parse(raw, ott) as T;
+      setState(() {
+        data = onlineData;
+      });
+      DB.home.add(currentTabName, onlineData, ott);
+    } catch (e) {
+      l.error("Error loading home data from online: $e");
+      // Fallback: If we have no data displayed, try to fetch whatever is available locally
+      if (data == null) {
+        final localData = await DB.home.get(currentTabName, ott) as T?;
+        if (localData != null) {
+          setState(() {
+            data = localData;
+          });
+        }
+      }
+    }
   }
 
   void goToMovie(String id) {

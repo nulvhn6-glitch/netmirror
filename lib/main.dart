@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -38,9 +39,10 @@ void main() async {
     });
   }
 
-  // if (isDesk) {
-  //   databaseFactory = databaseFactoryFfi;
-  // }
+  if (isDesk) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
 
   await DB.instance.database;
   Downloader.instance;

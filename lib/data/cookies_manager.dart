@@ -61,8 +61,8 @@ class CookiesManager {
   }
 
   static bool get isExpired {
-    // Return true to force testing of the cinematic Netflix loader and silent verification
-    return true;
+    if (_tHashT == null || _tHashTExpire == null) return true;
+    return _tHashTExpire!.isBefore(DateTime.now());
   }
 
   static bool get isValidResourceKey =>
@@ -86,19 +86,27 @@ class CookiesManager {
       try {
         await openAdd(_addhash!);
         onAddOpen?.call();
-        await Future.delayed(const Duration(seconds: 35), () async {
+        
+        // Smart polling: try verifying every 2 seconds up to 12 times to succeed instantly!
+        bool verified = false;
+        for (int attempt = 0; attempt < 12; attempt++) {
+          await Future.delayed(const Duration(seconds: 2));
           try {
             final newTHashT = await verifyAdd(_addhash!);
-            log("new t_hash_t $newTHashT");
+            log("Verify attempt ${attempt + 1}: t_hash_t = $newTHashT");
             if (newTHashT != null) {
               tHashT = newTHashT;
+              verified = true;
               onSuccess?.call();
+              break;
             }
           } catch (e) {
-            log("exception in getting verify add $e");
-            onFailure?.call();
+            log("Verify attempt ${attempt + 1} failed: $e");
           }
-        });
+        }
+        if (!verified) {
+          onFailure?.call();
+        }
       } catch (e) {
         log("Error opening add link: $e");
         handleAddOpenError?.call(_addhash!);

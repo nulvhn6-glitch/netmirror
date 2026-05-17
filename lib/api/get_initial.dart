@@ -22,8 +22,7 @@ Future<String> getInitial() async {
   };
 
   try {
-    // final res = await http.get(url, headers: headers);
-    final res = await http.get(url, headers: headers);
+    final res = await http.get(url, headers: headers).timeout(const Duration(seconds: 4));
     print(res.body);
     final status = res.statusCode;
     if (status != 200) throw Exception('http.get error: statusCode= $status');
@@ -79,7 +78,7 @@ Future<String?> verifyAdd(String addhash) async {
   final data = {'verify': addhash};
   final url = Uri.parse('$apiUrl/verify2.php');
 
-  final res = await http.post(url, headers: headers, body: data);
+  final res = await http.post(url, headers: headers, body: data).timeout(const Duration(seconds: 4));
   final status = res.statusCode;
   if (status != 200) {
     log("Verify Add, ${res.body}");

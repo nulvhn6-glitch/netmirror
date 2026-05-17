@@ -2,6 +2,11 @@
 cmake_minimum_required(VERSION 3.14)
 project(netmirror LANGUAGES CXX)
 
+# Workaround for ATL/MFC mismatch in Visual Studio 2026 Build Tools
+include_directories("C:/Program Files (x86)/Microsoft Visual Studio/18/BuildTools/VC/Tools/MSVC/14.44.35207/atlmfc/include")
+link_directories("C:/Program Files (x86)/Microsoft Visual Studio/18/BuildTools/VC/Tools/MSVC/14.44.35207/atlmfc/lib/x64")
+link_libraries("runtimeobject.lib")
+
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
 set(BINARY_NAME "netmirror")
